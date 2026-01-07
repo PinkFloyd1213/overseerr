@@ -9,6 +9,7 @@ import {
   ExclamationTriangleIcon,
   FilmIcon,
   SparklesIcon,
+  TrashIcon,
   TvIcon,
   UsersIcon,
   XMarkIcon,
@@ -24,6 +25,7 @@ export const menuMessages = defineMessages({
   browsetv: 'Series',
   requests: 'Requests',
   issues: 'Issues',
+  deletionrequests: 'Deletion Requests',
   users: 'Users',
   settings: 'Settings',
 });
@@ -82,6 +84,17 @@ const SidebarLinks: SidebarLinkProps[] = [
       Permission.MANAGE_ISSUES,
       Permission.CREATE_ISSUES,
       Permission.VIEW_ISSUES,
+    ],
+    permissionType: 'or',
+  },
+  {
+    href: '/deletion-requests',
+    messagesKey: 'deletionrequests',
+    svgIcon: <TrashIcon className="mr-3 h-6 w-6" />,
+    activeRegExp: /^\/deletion-requests/,
+    requiredPermission: [
+      Permission.REQUEST_DELETION,
+      Permission.MANAGE_DELETION_REQUESTS,
     ],
     permissionType: 'or',
   },

@@ -34,6 +34,8 @@ import searchRoutes from './search';
 import serviceRoutes from './service';
 import tvRoutes from './tv';
 import user from './user';
+import deletionRequestRoutes from './deletionRequest';
+import { DeletionRequest } from '@server/entity/DeletionRequest';
 
 const router = Router();
 
@@ -230,6 +232,29 @@ router.get<{ id: string }>('/network/:id', async (req, res, next) => {
   }
 });
 
+router.get<{ id: string }>(
+  '/:id/deletion-requests',
+  async (req, res, next) => {
+    try {
+       if (Number(req.params.id) !== req.user?.id) {
+        return next({ status: 403, message: 'Forbidden' });
+      }
+
+      const requestRepository = getRepository(DeletionRequest);
+
+      const requests = await requestRepository.find({
+        where: { requestedBy: { id: Number(req.params.id) } },
+        relations: ['media', 'votes'],
+        order: { createdAt: 'DESC' }
+      });
+
+      return res.status(200).json(requests);
+    } catch (e) {
+      next({ status: 500, message: e.message });
+    }
+  }
+);
+
 router.get('/genres/movie', isAuthenticated(), async (req, res, next) => {
   const tmdb = new TheMovieDb();
 
@@ -392,5 +417,7 @@ router.get('/', (_req, res) => {
     version: '1.0',
   });
 });
+
+router.use('/deletion-request', isAuthenticated(), deletionRequestRoutes);
 
 export default router;

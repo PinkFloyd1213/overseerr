@@ -75,6 +75,11 @@ export const messages = defineMessages({
   viewwatchlists: 'View Plex Watchlists',
   viewwatchlistsDescription:
     "Grant permission to view other users' Plex Watchlists.",
+  // Messages pour la suppression
+  managedeletion: 'Manage Deletion',
+  managedeletionDescription: 'Grant permission to approve or reject deletion requests.',
+  requestdeletion: 'Request Deletion',
+  requestdeletionDescription: 'Grant permission to request media deletion.',
 });
 
 interface PermissionEditProps {
@@ -137,6 +142,22 @@ export const PermissionEdit = ({
         },
       ],
     },
+    // NOUVEAU GROUPE SUPPRESSION
+    {
+      id: 'managedeletion',
+      name: intl.formatMessage(messages.managedeletion),
+      description: intl.formatMessage(messages.managedeletionDescription),
+      permission: Permission.MANAGE_DELETION_REQUESTS,
+      children: [
+        {
+          id: 'requestdeletion',
+          name: intl.formatMessage(messages.requestdeletion),
+          description: intl.formatMessage(messages.requestdeletionDescription),
+          permission: Permission.REQUEST_DELETION,
+        },
+      ],
+    },
+    // ... reste des permissions existantes (request, autoapprove, etc.) inchangées ...
     {
       id: 'request',
       name: intl.formatMessage(messages.request),

@@ -26,6 +26,8 @@ export enum Permission {
   AUTO_REQUEST_TV = 33554432,
   RECENT_VIEW = 67108864,
   WATCHLIST_VIEW = 134217728,
+  MANAGE_DELETION_REQUESTS = 268435456,
+  REQUEST_DELETION = 536870912,
 }
 
 export interface PermissionCheckOptions {

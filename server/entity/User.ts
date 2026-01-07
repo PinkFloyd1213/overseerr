@@ -29,6 +29,7 @@ import { MediaRequest } from './MediaRequest';
 import SeasonRequest from './SeasonRequest';
 import { UserPushSubscription } from './UserPushSubscription';
 import { UserSettings } from './UserSettings';
+import { DeletionVote } from './DeletionVote';
 
 @Entity()
 export class User {
@@ -331,4 +332,6 @@ export class User {
       },
     };
   }
+  @OneToMany(() => DeletionVote, (vote) => vote.user)
+  public deletionVotes: DeletionVote[];
 }

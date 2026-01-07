@@ -53,6 +53,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import useSWR from 'swr';
+import DeleteRequestButton from '@app/components/DeleteRequestButton';
 
 const messages = defineMessages({
   firstAirDate: 'First Air Date',
@@ -414,6 +415,9 @@ const TvDetails = ({ tv }: TvDetailsProps) => {
             isShowComplete={isComplete}
             is4kShowComplete={is4kComplete}
           />
+          {data.mediaInfo && (
+            <DeleteRequestButton mediaId={data.mediaInfo.id} />
+          )}
           {(data.mediaInfo?.status === MediaStatus.AVAILABLE ||
             data.mediaInfo?.status === MediaStatus.PARTIALLY_AVAILABLE ||
             (settings.currentSettings.series4kEnabled &&

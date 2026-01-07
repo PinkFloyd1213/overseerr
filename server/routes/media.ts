@@ -15,6 +15,8 @@ import { isAuthenticated } from '@server/middleware/auth';
 import { Router } from 'express';
 import type { FindOneOptions } from 'typeorm';
 import { In } from 'typeorm';
+import { DeletionRequest, DeletionRequestStatus } from '@server/entity/DeletionRequest';
+import { DeletionVote } from '@server/entity/DeletionVote';
 
 const mediaRoutes = Router();
 
@@ -87,6 +89,54 @@ mediaRoutes.get('/', async (req, res, next) => {
     next({ status: 500, message: e.message });
   }
 });
+
+mediaRoutes.post(
+  '/:id/delete_request',
+  isAuthenticated(Permission.REQUEST_DELETION),
+  async (req, res, next) => {
+    const mediaRepository = getRepository(Media);
+    const deletionRequestRepository = getRepository(DeletionRequest);
+    const voteRepository = getRepository(DeletionVote);
+
+    try {
+      const media = await mediaRepository.findOneOrFail({
+        where: { id: Number(req.params.id) },
+      });
+
+      const existingRequest = await deletionRequestRepository.findOne({
+        where: {
+          media: { id: media.id },
+          status: DeletionRequestStatus.PENDING,
+        },
+      });
+
+      if (existingRequest) {
+        return next({
+          status: 409,
+          message: 'A deletion request is already pending for this media.',
+        });
+      }
+
+      const request = new DeletionRequest();
+      request.media = media;
+      request.requestedBy = req.user!;
+      request.status = DeletionRequestStatus.PENDING;
+
+      await deletionRequestRepository.save(request);
+
+      const vote = new DeletionVote();
+      vote.user = req.user!;
+      vote.request = request;
+      vote.approve = true;
+
+      await voteRepository.save(vote);
+
+      return res.status(201).json(request);
+    } catch (e) {
+      next({ status: 500, message: e.message });
+    }
+  }
+);
 
 mediaRoutes.post<
   {

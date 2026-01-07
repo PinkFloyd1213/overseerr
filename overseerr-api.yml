@@ -34,6 +34,8 @@ tags:
     description: Endpoints related to media management.
   - name: collection
     description: Endpoints related to retrieving collection details.
+  - name: deletion-request
+    description: Endpoints related to deletion requests.
   - name: service
     description: Endpoints related to getting service (Radarr/Sonarr) details.
 servers:
@@ -6566,6 +6568,104 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/WatchProviderDetails'
+  /deletion-request:
+    get:
+      tags:
+        - deletion-request
+      summary: Get deletion requests
+      description: Returns all pending deletion requests
+      responses:
+        '200':
+          description: List of deletion requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /deletion-request/{requestId}/vote:
+    post:
+      tags:
+        - deletion-request
+      summary: Vote on a deletion request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                approve:
+                  type: boolean
+      responses:
+        '200':
+          description: Vote registered
+          content:
+            application/json:
+              schema:
+                type: object
+  /media/{mediaId}/delete_request:
+    post:
+      tags:
+        - media
+      summary: Request media deletion
+      parameters:
+        - name: mediaId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: Deletion request created
+          content:
+            application/json:
+              schema:
+                type: object
+  /deletion-request/{requestId}/approve:
+    post:
+      tags:
+        - Deletion Request
+      summary: Force approve a deletion request
+      description: Admins only - Immediately approves and deletes the media
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deletion approved
+          content:
+            application/json:
+              schema:
+                type: object
+  /deletion-request/{requestId}:
+    delete:
+      tags:
+        - Deletion Request
+      summary: Reject a deletion request
+      description: Admins only - Rejects the request without deleting media
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deletion rejected
+          content:
+            application/json:
+              schema:
+                type: object
 security:
   - cookieAuth: []
   - apiKey: []

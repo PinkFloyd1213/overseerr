@@ -20,6 +20,7 @@ import {
 import Issue from './Issue';
 import { MediaRequest } from './MediaRequest';
 import Season from './Season';
+import { DeletionRequest } from './DeletionRequest';
 
 @Entity()
 class Media {
@@ -311,6 +312,10 @@ class Media {
       }
     }
   }
+  @OneToMany(() => DeletionRequest, (request) => request.media, {
+    cascade: true,
+  })
+  public deletionRequests: DeletionRequest[];
 }
 
 export default Media;

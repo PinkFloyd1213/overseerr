@@ -5,6 +5,7 @@ import type { MediaRequest } from '@server/entity/MediaRequest';
 import type { User } from '@server/entity/User';
 import type { NotificationAgentConfig } from '@server/lib/settings';
 import type { Notification } from '..';
+import type { DeletionRequest } from '@server/entity/DeletionRequest';
 
 export interface NotificationPayload {
   event?: string;
@@ -17,6 +18,7 @@ export interface NotificationPayload {
   message?: string;
   extra?: { name: string; value: string }[];
   request?: MediaRequest;
+  deletionRequest?: DeletionRequest;
   issue?: Issue;
   comment?: IssueComment;
   pendingRequestsCount?: number;
