@@ -1,6 +1,11 @@
 import TautulliAPI from '@server/api/tautulli';
 import { MediaStatus, MediaType } from '@server/constants/media';
 import { getRepository } from '@server/datasource';
+import {
+  DeletionRequest,
+  DeletionRequestStatus,
+} from '@server/entity/DeletionRequest';
+import { DeletionVote } from '@server/entity/DeletionVote';
 import Media from '@server/entity/Media';
 import Season from '@server/entity/Season';
 import { User } from '@server/entity/User';
@@ -15,8 +20,6 @@ import { isAuthenticated } from '@server/middleware/auth';
 import { Router } from 'express';
 import type { FindOneOptions } from 'typeorm';
 import { In } from 'typeorm';
-import { DeletionRequest, DeletionRequestStatus } from '@server/entity/DeletionRequest';
-import { DeletionVote } from '@server/entity/DeletionVote';
 
 const mediaRoutes = Router();
 
@@ -105,6 +108,7 @@ mediaRoutes.post(
     const mediaRepository = getRepository(Media);
     const deletionRequestRepository = getRepository(DeletionRequest);
     const voteRepository = getRepository(DeletionVote);
+    const seasonNumber = req.body.seasonNumber;
 
     try {
       const media = await mediaRepository.findOneOrFail({
@@ -114,6 +118,7 @@ mediaRoutes.post(
       const existingRequest = await deletionRequestRepository.findOne({
         where: {
           media: { id: media.id },
+          seasonNumber: seasonNumber ?? null,
           status: DeletionRequestStatus.PENDING,
         },
       });
@@ -121,7 +126,7 @@ mediaRoutes.post(
       if (existingRequest) {
         return next({
           status: 409,
-          message: 'A deletion request is already pending for this media.',
+          message: 'A deletion request is already pending for this item.',
         });
       }
 
@@ -129,6 +134,7 @@ mediaRoutes.post(
       request.media = media;
       request.requestedBy = req.user!;
       request.status = DeletionRequestStatus.PENDING;
+      request.seasonNumber = seasonNumber;
 
       await deletionRequestRepository.save(request);
 

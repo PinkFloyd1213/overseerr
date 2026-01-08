@@ -7,9 +7,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { DeletionVote } from './DeletionVote';
 import Media from './Media';
 import { User } from './User';
-import { DeletionVote } from './DeletionVote';
 
 export enum DeletionRequestStatus {
   PENDING = 0,
@@ -24,6 +24,9 @@ export class DeletionRequest {
 
   @Column({ type: 'int', default: DeletionRequestStatus.PENDING })
   public status: DeletionRequestStatus;
+
+  @Column({ nullable: true })
+  public seasonNumber?: number;
 
   @ManyToOne(() => Media, (media) => media.deletionRequests, {
     eager: true,

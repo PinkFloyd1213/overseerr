@@ -1,15 +1,18 @@
+import TheMovieDb from '@server/api/themoviedb';
+import { MediaType } from '@server/constants/media';
 import { getRepository } from '@server/datasource';
-import { getSettings } from '@server/lib/settings';
-import { DeletionRequest, DeletionRequestStatus } from '@server/entity/DeletionRequest';
+import {
+  DeletionRequest,
+  DeletionRequestStatus,
+} from '@server/entity/DeletionRequest';
 import { DeletionVote } from '@server/entity/DeletionVote';
 import Media from '@server/entity/Media';
 import { User } from '@server/entity/User';
+import notificationManager, { Notification } from '@server/lib/notifications';
 import { Permission } from '@server/lib/permissions';
+import { getSettings } from '@server/lib/settings';
 import { isAuthenticated } from '@server/middleware/auth';
 import { Router } from 'express';
-import notificationManager, { Notification } from '@server/lib/notifications';
-import TheMovieDb from '@server/api/themoviedb';
-import { MediaType } from '@server/constants/media';
 import { In } from 'typeorm';
 
 const router = Router();
@@ -33,12 +36,15 @@ router.get('/', isAuthenticated(), async (req, res, next) => {
   try {
     const requests = await requestRepository.find({
       where: {
-        status: In([DeletionRequestStatus.PENDING, DeletionRequestStatus.APPROVED])
+        status: In([
+          DeletionRequestStatus.PENDING,
+          DeletionRequestStatus.APPROVED,
+        ]),
       },
       relations: ['media', 'requestedBy', 'votes', 'votes.user'],
       order: {
         status: 'ASC',
-        createdAt: 'DESC'
+        createdAt: 'DESC',
       },
     });
 
@@ -61,9 +67,16 @@ router.get('/', isAuthenticated(), async (req, res, next) => {
             title = tv.name;
             posterPath = tv.poster_path ?? '';
             backdropPath = tv.backdrop_path ?? '';
+
+            if (req.seasonNumber) {
+              title += ` - Season ${req.seasonNumber}`;
+            }
           }
         } catch (e) {
-          console.error(`Failed to fetch details for media ${req.media.tmdbId}`, e);
+          console.error(
+            `Failed to fetch details for media ${req.media.tmdbId}`,
+            e
+          );
         }
 
         return {
@@ -73,8 +86,8 @@ router.get('/', isAuthenticated(), async (req, res, next) => {
             ...req.media,
             title,
             posterPath,
-            backdropPath
-          }
+            backdropPath,
+          },
         };
       })
     );
@@ -85,89 +98,97 @@ router.get('/', isAuthenticated(), async (req, res, next) => {
   }
 });
 
-router.post(
-  '/:id/vote',
-  isAuthenticated(),
-  async (req, res, next) => {
-    const requestRepository = getRepository(DeletionRequest);
-    const voteRepository = getRepository(DeletionVote);
-    const userRepository = getRepository(User);
+router.post('/:id/vote', isAuthenticated(), async (req, res, next) => {
+  const requestRepository = getRepository(DeletionRequest);
+  const voteRepository = getRepository(DeletionVote);
+  const userRepository = getRepository(User);
 
-    try {
-      const request = await requestRepository.findOneOrFail({
-        where: { id: Number(req.params.id) },
-        relations: ['votes', 'media', 'votes.user'],
-      });
+  try {
+    const request = await requestRepository.findOneOrFail({
+      where: { id: Number(req.params.id) },
+      relations: ['votes', 'media', 'votes.user'],
+    });
 
-      if (request.status !== DeletionRequestStatus.PENDING) {
-        return next({ status: 400, message: 'Request is not pending.' });
-      }
-
-      const existingVoteIndex = request.votes.findIndex(v => v.user.id === req.user!.id);
-
-      if (existingVoteIndex !== -1) {
-        return next({ status: 409, message: 'You have already voted.' });
-      }
-
-      const vote = new DeletionVote();
-      vote.user = req.user!;
-      vote.request = request;
-      vote.approve = req.body.approve === true;
-
-      await voteRepository.save(vote);
-      request.votes.push(vote);
-
-      const totalUsers = await userRepository.count();
-      const positiveVotes = request.votes.filter(v => v.approve).length;
-
-      if (positiveVotes >= totalUsers) {
-         const tmdb = new TheMovieDb();
-         let title = '';
-         let posterPath = '';
-
-         try {
-            if (request.media.mediaType === MediaType.MOVIE) {
-                const movie = await tmdb.getMovie({ movieId: request.media.tmdbId });
-                title = movie.title;
-                posterPath = movie.poster_path ?? '';
-            } else {
-                const tv = await tmdb.getTvShow({ tvId: request.media.tmdbId });
-                title = tv.name;
-                posterPath = tv.poster_path ?? '';
-            }
-
-            notificationManager.sendNotification(Notification.MEDIA_DELETION_CONSENSUS, {
-                event: 'Deletion Consensus Reached',
-                subject: `Deletion Request Approved by Community: ${title}`,
-                message: `All active users (${totalUsers}) have voted to delete ${title}.`,
-                media: request.media,
-                deletionRequest: request,
-                notifySystem: true,
-                notifyAdmin: true,
-                image: posterPath ? `https://image.tmdb.org/t/p/w600_and_h900_bestv2${posterPath}` : undefined,
-            });
-         } catch (e) {
-           console.error('Failed to fetch media details for notification', e);
-         }
-      }
-
-      return res.status(200).json({
-        id: vote.id,
-        approve: vote.approve,
-        userId: req.user!.id
-      });
-    } catch (e) {
-      console.error(e);
-      next({ status: 500, message: e.message });
+    if (request.status !== DeletionRequestStatus.PENDING) {
+      return next({ status: 400, message: 'Request is not pending.' });
     }
+
+    const existingVoteIndex = request.votes.findIndex(
+      (v) => v.user.id === req.user!.id
+    );
+
+    if (existingVoteIndex !== -1) {
+      return next({ status: 409, message: 'You have already voted.' });
+    }
+
+    const vote = new DeletionVote();
+    vote.user = req.user!;
+    vote.request = request;
+    vote.approve = req.body.approve === true;
+
+    await voteRepository.save(vote);
+    request.votes.push(vote);
+
+    const totalUsers = await userRepository.count();
+    const positiveVotes = request.votes.filter((v) => v.approve).length;
+
+    if (positiveVotes >= totalUsers) {
+      const tmdb = new TheMovieDb();
+      let title = '';
+      let posterPath = '';
+
+      try {
+        if (request.media.mediaType === MediaType.MOVIE) {
+          const movie = await tmdb.getMovie({ movieId: request.media.tmdbId });
+          title = movie.title;
+          posterPath = movie.poster_path ?? '';
+        } else {
+          const tv = await tmdb.getTvShow({ tvId: request.media.tmdbId });
+          title = tv.name;
+          posterPath = tv.poster_path ?? '';
+
+          if (request.seasonNumber) {
+            title += ` - Season ${request.seasonNumber}`;
+          }
+        }
+
+        notificationManager.sendNotification(
+          Notification.MEDIA_DELETION_CONSENSUS,
+          {
+            event: 'Deletion Consensus Reached',
+            subject: `Deletion Request Approved by Community: ${title}`,
+            message: `All active users (${totalUsers}) have voted to delete ${title}.`,
+            media: request.media,
+            deletionRequest: request,
+            notifySystem: true,
+            notifyAdmin: true,
+            image: posterPath
+              ? `https://image.tmdb.org/t/p/w600_and_h900_bestv2${posterPath}`
+              : undefined,
+          }
+        );
+      } catch (e) {
+        console.error('Failed to fetch media details for notification', e);
+      }
+    }
+
+    return res.status(200).json({
+      id: vote.id,
+      approve: vote.approve,
+      userId: req.user!.id,
+    });
+  } catch (e) {
+    console.error(e);
+    next({ status: 500, message: e.message });
   }
-);
+});
 
 router.post(
   '/:id/approve',
   isAuthenticated(Permission.ADMIN),
   async (req, res, next) => {
     const requestRepository = getRepository(DeletionRequest);
+    const mediaRepository = getRepository(Media);
 
     try {
       const request = await requestRepository.findOneOrFail({
@@ -177,6 +198,10 @@ router.post(
 
       request.status = DeletionRequestStatus.APPROVED;
       await requestRepository.save(request);
+
+      if (!request.seasonNumber) {
+        await mediaRepository.remove(request.media);
+      }
 
       return res.status(200).json(request);
     } catch (e) {

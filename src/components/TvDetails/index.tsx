@@ -13,6 +13,7 @@ import PlayButton from '@app/components/Common/PlayButton';
 import StatusBadgeMini from '@app/components/Common/StatusBadgeMini';
 import Tag from '@app/components/Common/Tag';
 import Tooltip from '@app/components/Common/Tooltip';
+import DeleteRequestButton from '@app/components/DeleteRequestButton'; // <--- Import Ajouté
 import ExternalLinkBlock from '@app/components/ExternalLinkBlock';
 import IssueModal from '@app/components/IssueModal';
 import ManageSlideOver from '@app/components/ManageSlideOver';
@@ -53,7 +54,6 @@ import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import useSWR from 'swr';
-import DeleteRequestButton from '@app/components/DeleteRequestButton';
 
 const messages = defineMessages({
   firstAirDate: 'First Air Date',
@@ -415,9 +415,12 @@ const TvDetails = ({ tv }: TvDetailsProps) => {
             isShowComplete={isComplete}
             is4kShowComplete={is4kComplete}
           />
+
+          {/* BOUTON SUPPRESSION SÉRIE GLOBALE */}
           {data.mediaInfo && (
             <DeleteRequestButton mediaId={data.mediaInfo.id} />
           )}
+
           {(data.mediaInfo?.status === MediaStatus.AVAILABLE ||
             data.mediaInfo?.status === MediaStatus.PARTIALLY_AVAILABLE ||
             (settings.currentSettings.series4kEnabled &&
@@ -584,6 +587,18 @@ const TvDetails = ({ tv }: TvDetailsProps) => {
                       new Date(a.createdAt).getTime()
                   )[0];
 
+                // Calcul de la disponibilité pour afficher le bouton delete
+                const isAvailable =
+                  mSeason?.status === MediaStatus.AVAILABLE ||
+                  mSeason?.status === MediaStatus.PARTIALLY_AVAILABLE;
+
+                const is4kAvailable =
+                  mSeason4k?.status4k === MediaStatus.AVAILABLE ||
+                  mSeason4k?.status4k === MediaStatus.PARTIALLY_AVAILABLE;
+
+                const showDeleteButton =
+                  isAvailable || (show4k && is4kAvailable);
+
                 if (season.episodeCount === 0) {
                   return null;
                 }
@@ -593,7 +608,8 @@ const TvDetails = ({ tv }: TvDetailsProps) => {
                     {({ open }) => (
                       <>
                         <Disclosure.Button
-                          className={`mt-2 flex w-full items-center justify-between space-x-2 border-gray-700 bg-gray-800 px-4 py-2 text-gray-200 ${
+                          as="div"
+                          className={`mt-2 flex w-full cursor-pointer items-center justify-between space-x-2 border-gray-700 bg-gray-800 px-4 py-2 text-gray-200 ${
                             open
                               ? 'rounded-t-md border-t border-l border-r'
                               : 'rounded-md border'
@@ -801,6 +817,17 @@ const TvDetails = ({ tv }: TvDetailsProps) => {
                                 </div>
                               </>
                             )}
+
+                          {/* BOUTON SUPPRESSION SAISON */}
+                          {showDeleteButton && data.mediaInfo && (
+                            <div className="mr-1">
+                              <DeleteRequestButton
+                                mediaId={data.mediaInfo.id}
+                                seasonNumber={season.seasonNumber}
+                              />
+                            </div>
+                          )}
+
                           <ChevronDownIcon
                             className={`${
                               open ? 'rotate-180' : ''

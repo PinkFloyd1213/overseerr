@@ -6624,6 +6624,15 @@ paths:
           required: true
           schema:
             type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                seasonNumber:
+                  type: integer
       responses:
         '201':
           description: Deletion request created

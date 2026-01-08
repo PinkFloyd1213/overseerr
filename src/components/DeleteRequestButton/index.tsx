@@ -1,17 +1,21 @@
 import Button from '@app/components/Common/Button';
 import Tooltip from '@app/components/Common/Tooltip';
+import useSettings from '@app/hooks/useSettings';
+import { Permission, useUser } from '@app/hooks/useUser';
 import { TrashIcon } from '@heroicons/react/24/outline';
-import useSWR, { mutate } from 'swr';
 import axios from 'axios';
 import { useState } from 'react';
-import { useUser, Permission } from '@app/hooks/useUser';
-import useSettings from '@app/hooks/useSettings';
+import useSWR, { mutate } from 'swr';
 
 interface DeleteRequestButtonProps {
   mediaId: number;
+  seasonNumber?: number; // Nouveau paramètre optionnel
 }
 
-const DeleteRequestButton = ({ mediaId }: DeleteRequestButtonProps) => {
+const DeleteRequestButton = ({
+  mediaId,
+  seasonNumber,
+}: DeleteRequestButtonProps) => {
   const settings = useSettings();
   const { user, hasPermission } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,14 +33,23 @@ const DeleteRequestButton = ({ mediaId }: DeleteRequestButtonProps) => {
     return null;
   }
 
+  // Vérifie si une demande existe pour ce média ET cette saison
   const activeRequest = requests?.find(
-    (req: any) => req.media.id === mediaId && req.status === 0
+    (req: any) =>
+      req.media.id === mediaId &&
+      req.status === 0 &&
+      req.seasonNumber == seasonNumber // Comparaison souple pour null/undefined
   );
 
-  const requestDeletion = async () => {
+  const requestDeletion = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Empêche l'ouverture de l'accordéon si placé dans le header
+    e.stopPropagation();
+
     setIsSubmitting(true);
     try {
-      await axios.post(`/api/v1/media/${mediaId}/delete_request`);
+      await axios.post(`/api/v1/media/${mediaId}/delete_request`, {
+        seasonNumber, // Envoi du numéro de saison
+      });
       mutate('/api/v1/deletion-request');
     } catch (e) {
       console.error('Error requesting deletion', e);
@@ -45,12 +58,19 @@ const DeleteRequestButton = ({ mediaId }: DeleteRequestButtonProps) => {
     }
   };
 
+  // Si c'est une saison, on affiche un petit bouton discret, sinon le gros bouton
+  const isSeasonButton = seasonNumber !== undefined;
+
   if (activeRequest) {
     return (
-      <Tooltip content="Deletion request pending approval">
-        <span className="ml-2 inline-block">
-          <Button buttonType="danger" disabled>
-            <TrashIcon />
+      <Tooltip content="Deletion pending">
+        <span className={`${isSeasonButton ? 'mr-2' : 'ml-2'} inline-block`}>
+          <Button
+            buttonType="danger"
+            size={isSeasonButton ? 'sm' : 'md'}
+            disabled
+          >
+            <TrashIcon className={isSeasonButton ? 'h-4 w-4' : 'h-5 w-5'} />
           </Button>
         </span>
       </Tooltip>
@@ -58,15 +78,19 @@ const DeleteRequestButton = ({ mediaId }: DeleteRequestButtonProps) => {
   }
 
   return (
-    <Tooltip content="Request Removal from Server">
-      <Button
-        className="ml-2"
-        buttonType="danger"
-        onClick={requestDeletion}
-        disabled={isSubmitting}
-      >
-        <TrashIcon />
-      </Button>
+    <Tooltip
+      content={`Request ${isSeasonButton ? 'Season' : 'Series'} Removal`}
+    >
+      <span className={`${isSeasonButton ? 'mr-2' : 'ml-2'} inline-block`}>
+        <Button
+          buttonType="danger"
+          size={isSeasonButton ? 'sm' : 'md'} // Plus petit pour les saisons
+          onClick={requestDeletion}
+          disabled={isSubmitting}
+        >
+          <TrashIcon className={isSeasonButton ? 'h-4 w-4' : 'h-5 w-5'} />
+        </Button>
+      </span>
     </Tooltip>
   );
 };
