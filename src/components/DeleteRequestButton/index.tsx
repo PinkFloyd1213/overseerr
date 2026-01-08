@@ -9,7 +9,7 @@ import useSWR, { mutate } from 'swr';
 
 interface DeleteRequestButtonProps {
   mediaId: number;
-  seasonNumber?: number; // Nouveau paramètre optionnel
+  seasonNumber?: number;
 }
 
 const DeleteRequestButton = ({
@@ -33,22 +33,21 @@ const DeleteRequestButton = ({
     return null;
   }
 
-  // Vérifie si une demande existe pour ce média ET cette saison
   const activeRequest = requests?.find(
     (req: any) =>
       req.media.id === mediaId &&
       req.status === 0 &&
-      req.seasonNumber == seasonNumber // Comparaison souple pour null/undefined
+      req.seasonNumber == seasonNumber
   );
 
   const requestDeletion = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Empêche l'ouverture de l'accordéon si placé dans le header
+    e.preventDefault();
     e.stopPropagation();
 
     setIsSubmitting(true);
     try {
       await axios.post(`/api/v1/media/${mediaId}/delete_request`, {
-        seasonNumber, // Envoi du numéro de saison
+        seasonNumber,
       });
       mutate('/api/v1/deletion-request');
     } catch (e) {
@@ -58,7 +57,6 @@ const DeleteRequestButton = ({
     }
   };
 
-  // Si c'est une saison, on affiche un petit bouton discret, sinon le gros bouton
   const isSeasonButton = seasonNumber !== undefined;
 
   if (activeRequest) {
@@ -67,7 +65,7 @@ const DeleteRequestButton = ({
         <span className={`${isSeasonButton ? 'mr-2' : 'ml-2'} inline-block`}>
           <Button
             buttonType="danger"
-            size={isSeasonButton ? 'sm' : 'md'}
+            buttonSize={isSeasonButton ? 'sm' : 'md'}
             disabled
           >
             <TrashIcon className={isSeasonButton ? 'h-4 w-4' : 'h-5 w-5'} />
@@ -84,7 +82,7 @@ const DeleteRequestButton = ({
       <span className={`${isSeasonButton ? 'mr-2' : 'ml-2'} inline-block`}>
         <Button
           buttonType="danger"
-          size={isSeasonButton ? 'sm' : 'md'} // Plus petit pour les saisons
+          buttonSize={isSeasonButton ? 'sm' : 'md'}
           onClick={requestDeletion}
           disabled={isSubmitting}
         >
