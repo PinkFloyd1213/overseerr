@@ -1,8 +1,6 @@
 import 'reflect-metadata';
 import type { DataSourceOptions, EntityTarget, Repository } from 'typeorm';
 import { DataSource } from 'typeorm';
-import { DeletionRequest } from './entity/DeletionRequest';
-import { DeletionVote } from './entity/DeletionVote';
 
 const devConfig: DataSourceOptions = {
   type: 'sqlite',
@@ -23,12 +21,17 @@ const prodConfig: DataSourceOptions = {
   database: process.env.CONFIG_DIRECTORY
     ? `${process.env.CONFIG_DIRECTORY}/db/db.sqlite3`
     : 'config/db/db.sqlite3',
+
   synchronize: true,
+
   migrationsRun: false,
   logging: false,
   enableWAL: true,
-  entities: ['dist/entity/**/*.js', DeletionRequest, DeletionVote],
-  migrations: ['dist/migration/**/*.js'],
+
+  entities: ['dist/entity/**/*.js'],
+
+  migrations: [],
+
   subscribers: ['dist/subscriber/**/*.js'],
 };
 
