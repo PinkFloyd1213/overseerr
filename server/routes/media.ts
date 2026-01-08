@@ -94,6 +94,14 @@ mediaRoutes.post(
   '/:id/delete_request',
   isAuthenticated(Permission.REQUEST_DELETION),
   async (req, res, next) => {
+    const settings = getSettings();
+    if (!settings.main.enableDeletionRequests) {
+      return next({
+        status: 403,
+        message: 'Deletion requests are disabled by the administrator.',
+      });
+    }
+
     const mediaRepository = getRepository(Media);
     const deletionRequestRepository = getRepository(DeletionRequest);
     const voteRepository = getRepository(DeletionVote);

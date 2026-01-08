@@ -128,6 +128,9 @@ components:
         partialRequestsEnabled:
           type: boolean
           example: false
+        enableDeletionRequests:
+          type: boolean
+          example: false
         localLogin:
           type: boolean
           example: true

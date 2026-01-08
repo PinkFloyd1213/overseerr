@@ -54,6 +54,8 @@ const messages = defineMessages({
   validationApplicationUrl: 'You must provide a valid URL',
   validationApplicationUrlTrailingSlash: 'URL must not end in a trailing slash',
   partialRequestsEnabled: 'Allow Partial Series Requests',
+  enableDeletionRequests: 'Enable Community Deletion Requests',
+  enableDeletionRequestsTip: 'Allow users to request media deletion',
   locale: 'Display Language',
 });
 
@@ -132,6 +134,7 @@ const SettingsMain = () => {
             region: data?.region,
             originalLanguage: data?.originalLanguage,
             partialRequestsEnabled: data?.partialRequestsEnabled,
+            enableDeletionRequests: data?.enableDeletionRequests,
             trustProxy: data?.trustProxy,
             cacheImages: data?.cacheImages,
           }}
@@ -148,6 +151,7 @@ const SettingsMain = () => {
                 region: values.region,
                 originalLanguage: values.originalLanguage,
                 partialRequestsEnabled: values.partialRequestsEnabled,
+                enableDeletionRequests: values.enableDeletionRequests,
                 trustProxy: values.trustProxy,
                 cacheImages: values.cacheImages,
               });
@@ -422,6 +426,32 @@ const SettingsMain = () => {
                         setFieldValue(
                           'partialRequestsEnabled',
                           !values.partialRequestsEnabled
+                        );
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <label
+                    htmlFor="enableDeletionRequests"
+                    className="checkbox-label"
+                  >
+                    <span className="mr-2">
+                      {intl.formatMessage(messages.enableDeletionRequests)}
+                    </span>
+                    <span className="label-tip">
+                      {intl.formatMessage(messages.enableDeletionRequestsTip)}
+                    </span>
+                  </label>
+                  <div className="form-input-area">
+                    <Field
+                      type="checkbox"
+                      id="enableDeletionRequests"
+                      name="enableDeletionRequests"
+                      onChange={() => {
+                        setFieldValue(
+                          'enableDeletionRequests',
+                          !values.enableDeletionRequests
                         );
                       }}
                     />

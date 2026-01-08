@@ -5,16 +5,21 @@ import useSWR, { mutate } from 'swr';
 import axios from 'axios';
 import { useState } from 'react';
 import { useUser, Permission } from '@app/hooks/useUser';
+import useSettings from '@app/hooks/useSettings';
 
 interface DeleteRequestButtonProps {
   mediaId: number;
 }
 
 const DeleteRequestButton = ({ mediaId }: DeleteRequestButtonProps) => {
+  const settings = useSettings();
   const { user, hasPermission } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const canRequestDeletion = user && hasPermission(Permission.REQUEST_DELETION);
+  const canRequestDeletion =
+    settings.currentSettings.enableDeletionRequests &&
+    user &&
+    hasPermission(Permission.REQUEST_DELETION);
 
   const { data: requests } = useSWR(
     canRequestDeletion ? '/api/v1/deletion-request' : null

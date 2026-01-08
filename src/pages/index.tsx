@@ -4,13 +4,19 @@ import Button from '@app/components/Common/Button';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { useUser } from '@app/hooks/useUser';
+import useSettings from '@app/hooks/useSettings';
 import type { NextPage } from 'next';
 
 const Index: NextPage = () => {
   const { user } = useUser();
+  const settings = useSettings();
 
   // Récupérer les demandes de suppression
-  const { data: deletionRequests } = useSWR('/api/v1/deletion-request');
+  const { data: deletionRequests } = useSWR(
+    settings.currentSettings.enableDeletionRequests
+      ? '/api/v1/deletion-request'
+      : null
+  );
 
   // Filtrer les demandes en attente (status 0) pour lesquelles l'utilisateur n'a PAS encore voté
   const pendingVotes = deletionRequests?.filter((req: any) =>

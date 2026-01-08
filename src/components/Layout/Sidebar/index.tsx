@@ -1,6 +1,7 @@
 import Badge from '@app/components/Common/Badge';
 import VersionStatus from '@app/components/Layout/VersionStatus';
 import useClickOutside from '@app/hooks/useClickOutside';
+import useSettings from '@app/hooks/useSettings';
 import { Permission, useUser } from '@app/hooks/useUser';
 import { Transition } from '@headlessui/react';
 import {
@@ -124,6 +125,7 @@ const Sidebar = ({
   revalidateIssueCount,
   revalidateRequestsCount,
 }: SidebarProps) => {
+  const settings = useSettings();
   const navRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const intl = useIntl();
@@ -196,7 +198,13 @@ const Sidebar = ({
                     </div>
                     <nav className="mt-16 flex-1 space-y-4 px-4">
                       {SidebarLinks.filter((link) =>
-                        link.requiredPermission
+                        link.messagesKey === 'deletionrequests'
+                          ? settings.currentSettings.enableDeletionRequests &&
+                            hasPermission(
+                              link.requiredPermission ?? 0,
+                              { type: link.permissionType ?? 'and' }
+                            )
+                          : link.requiredPermission
                           ? hasPermission(link.requiredPermission, {
                               type: link.permissionType ?? 'and',
                             })
@@ -266,7 +274,13 @@ const Sidebar = ({
               </div>
               <nav className="mt-16 flex-1 space-y-4 px-4">
                 {SidebarLinks.filter((link) =>
-                  link.requiredPermission
+                  link.messagesKey === 'deletionrequests'
+                    ? settings.currentSettings.enableDeletionRequests &&
+                      hasPermission(
+                        link.requiredPermission ?? 0,
+                        { type: link.permissionType ?? 'and' }
+                      )
+                    : link.requiredPermission
                     ? hasPermission(link.requiredPermission, {
                         type: link.permissionType ?? 'and',
                       })

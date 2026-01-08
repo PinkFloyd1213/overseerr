@@ -1,4 +1,5 @@
 import { getRepository } from '@server/datasource';
+import { getSettings } from '@server/lib/settings';
 import { DeletionRequest, DeletionRequestStatus } from '@server/entity/DeletionRequest';
 import { DeletionVote } from '@server/entity/DeletionVote';
 import Media from '@server/entity/Media';
@@ -12,6 +13,17 @@ import { MediaType } from '@server/constants/media';
 import { In } from 'typeorm';
 
 const router = Router();
+
+router.use((req, res, next) => {
+  const settings = getSettings();
+  if (!settings.main.enableDeletionRequests) {
+    return next({
+      status: 403,
+      message: 'Deletion requests are disabled by the administrator.',
+    });
+  }
+  next();
+});
 
 router.get('/', isAuthenticated(), async (req, res, next) => {
   const requestRepository = getRepository(DeletionRequest);

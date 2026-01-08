@@ -104,6 +104,7 @@ export interface MainSettings {
   trustProxy: boolean;
   partialRequestsEnabled: boolean;
   locale: string;
+  enableDeletionRequests: boolean;
 }
 
 interface PublicSettings {
@@ -126,6 +127,7 @@ interface FullPublicSettings extends PublicSettings {
   locale: string;
   emailEnabled: boolean;
   newPlexLogin: boolean;
+  enableDeletionRequests: boolean;
 }
 
 export interface NotificationAgentConfig {
@@ -301,6 +303,7 @@ class Settings {
         trustProxy: false,
         partialRequestsEnabled: true,
         locale: 'en',
+        enableDeletionRequests: false,
       },
       plex: {
         name: '',
@@ -512,6 +515,7 @@ class Settings {
       locale: this.data.main.locale,
       emailEnabled: this.data.notifications.agents.email.enabled,
       newPlexLogin: this.data.main.newPlexLogin,
+      enableDeletionRequests: this.data.main.enableDeletionRequests,
     };
   }
 
