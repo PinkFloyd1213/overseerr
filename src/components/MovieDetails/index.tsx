@@ -380,7 +380,12 @@ const MovieDetails = ({ movie }: MovieDetailsProps) => {
             tmdbId={data.id}
             onUpdate={() => revalidate()}
           />
-          {data.mediaInfo && <DeleteRequestButton mediaId={data.mediaInfo.id} />}
+          {data.mediaInfo && (
+            <DeleteRequestButton
+              mediaId={data.mediaInfo.id}
+              mediaType="movie"
+            />
+          )}
           {(data.mediaInfo?.status === MediaStatus.AVAILABLE ||
             (settings.currentSettings.movie4kEnabled &&
               hasPermission(

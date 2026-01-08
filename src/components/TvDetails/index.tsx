@@ -416,9 +416,8 @@ const TvDetails = ({ tv }: TvDetailsProps) => {
             is4kShowComplete={is4kComplete}
           />
 
-          {/* BOUTON SUPPRESSION SÉRIE GLOBALE */}
           {data.mediaInfo && (
-            <DeleteRequestButton mediaId={data.mediaInfo.id} />
+            <DeleteRequestButton mediaId={data.mediaInfo.id} mediaType="tv" />
           )}
 
           {(data.mediaInfo?.status === MediaStatus.AVAILABLE ||
@@ -818,12 +817,12 @@ const TvDetails = ({ tv }: TvDetailsProps) => {
                               </>
                             )}
 
-                          {/* BOUTON SUPPRESSION SAISON */}
                           {showDeleteButton && data.mediaInfo && (
                             <div className="mr-1">
                               <DeleteRequestButton
                                 mediaId={data.mediaInfo.id}
                                 seasonNumber={season.seasonNumber}
+                                mediaType="tv"
                               />
                             </div>
                           )}
