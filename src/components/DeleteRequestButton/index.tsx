@@ -10,11 +10,13 @@ import useSWR, { mutate } from 'swr';
 interface DeleteRequestButtonProps {
   mediaId: number;
   seasonNumber?: number;
+  mediaType: 'movie' | 'tv';
 }
 
 const DeleteRequestButton = ({
   mediaId,
   seasonNumber,
+  mediaType,
 }: DeleteRequestButtonProps) => {
   const settings = useSettings();
   const { user, hasPermission } = useUser();
@@ -59,6 +61,14 @@ const DeleteRequestButton = ({
 
   const isSeasonButton = seasonNumber !== undefined;
 
+  const getButtonText = () => {
+    if (isSeasonButton) return 'Season';
+    if (mediaType === 'movie') return 'Movie';
+    return 'Series';
+  };
+
+  const textType = getButtonText();
+
   if (activeRequest) {
     return (
       <Tooltip content="Deletion pending">
@@ -76,9 +86,7 @@ const DeleteRequestButton = ({
   }
 
   return (
-    <Tooltip
-      content={`Request ${isSeasonButton ? 'Season' : 'Series'} Removal`}
-    >
+    <Tooltip content={`Request ${textType} Removal`}>
       <span className={`${isSeasonButton ? 'mr-2' : 'ml-2'} inline-block`}>
         <Button
           buttonType="danger"
