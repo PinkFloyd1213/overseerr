@@ -1,6 +1,7 @@
 import Badge from '@app/components/Common/Badge';
 import { menuMessages } from '@app/components/Layout/Sidebar';
 import useClickOutside from '@app/hooks/useClickOutside';
+import useSettings from '@app/hooks/useSettings';
 import { Permission, useUser } from '@app/hooks/useUser';
 import { Transition } from '@headlessui/react';
 import {
@@ -10,6 +11,7 @@ import {
   ExclamationTriangleIcon,
   FilmIcon,
   SparklesIcon,
+  TrashIcon,
   TvIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline';
@@ -27,6 +29,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { cloneElement, useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
+import useSWR from 'swr';
 
 interface MobileMenuProps {
   pendingRequestsCount: number;
@@ -56,8 +59,26 @@ const MobileMenu = ({
   const ref = useRef<HTMLDivElement>(null);
   const intl = useIntl();
   const [isOpen, setIsOpen] = useState(false);
-  const { hasPermission } = useUser();
+  const { user, hasPermission } = useUser();
+  const settings = useSettings();
   const router = useRouter();
+
+  const shouldFetchDeletion =
+    settings.currentSettings.enableDeletionRequests &&
+    (hasPermission(Permission.REQUEST_DELETION) ||
+      hasPermission(Permission.MANAGE_DELETION_REQUESTS));
+
+  const { data: deletionRequests } = useSWR(
+    shouldFetchDeletion ? '/api/v1/deletion-request' : null
+  );
+
+  const pendingDeletionCount =
+    deletionRequests?.filter(
+      (req: any) =>
+        req.status === 0 &&
+        !req.votes.some((vote: any) => vote.user.id === user?.id)
+    ).length || 0;
+
   useClickOutside(ref, () => {
     setTimeout(() => {
       if (isOpen) {
@@ -107,6 +128,18 @@ const MobileMenu = ({
         Permission.MANAGE_ISSUES,
         Permission.CREATE_ISSUES,
         Permission.VIEW_ISSUES,
+      ],
+      permissionType: 'or',
+    },
+    {
+      href: '/deletion-requests',
+      content: intl.formatMessage(menuMessages.deletionrequests),
+      svgIcon: <TrashIcon className="h-6 w-6" />,
+      svgIconSelected: <TrashIcon className="h-6 w-6" />,
+      activeRegExp: /^\/deletion-requests/,
+      requiredPermission: [
+        Permission.REQUEST_DELETION,
+        Permission.MANAGE_DELETION_REQUESTS,
       ],
       permissionType: 'or',
     },
@@ -206,6 +239,14 @@ const MobileMenu = ({
                       </Badge>
                     </div>
                   )}
+                {link.href === '/deletion-requests' &&
+                  pendingDeletionCount > 0 && (
+                    <div className="ml-auto flex">
+                      <Badge className="rounded-md border-red-500 bg-gradient-to-br from-red-600 to-orange-600">
+                        {pendingDeletionCount}
+                      </Badge>
+                    </div>
+                  )}
               </a>
             </Link>
           );
@@ -247,6 +288,24 @@ const MobileMenu = ({
                             {pendingRequestsCount > 99
                               ? '99+'
                               : pendingRequestsCount}
+                          </Badge>
+                        </div>
+                      )}
+                    {link.href === '/deletion-requests' &&
+                      pendingDeletionCount > 0 && (
+                        <div className="absolute left-3 bottom-3">
+                          <Badge
+                            className={`bg-gradient-to-br ${
+                              isActive
+                                ? 'border-red-600 from-red-700 to-orange-700'
+                                : 'border-red-500 from-red-600 to-orange-600'
+                            } flex ${
+                              pendingDeletionCount > 99 ? 'w-6' : 'w-4'
+                            } h-4  items-center justify-center !px-[5px] !py-[7px] text-[8px]`}
+                          >
+                            {pendingDeletionCount > 99
+                              ? '99+'
+                              : pendingDeletionCount}
                           </Badge>
                         </div>
                       )}

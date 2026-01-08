@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Fragment, useEffect, useRef } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
+import useSWR from 'swr';
 
 export const menuMessages = defineMessages({
   dashboard: 'Discover',
@@ -129,7 +130,24 @@ const Sidebar = ({
   const navRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const intl = useIntl();
-  const { hasPermission } = useUser();
+  const { user, hasPermission } = useUser();
+
+  const shouldFetchDeletion =
+    settings.currentSettings.enableDeletionRequests &&
+    (hasPermission(Permission.REQUEST_DELETION) ||
+      hasPermission(Permission.MANAGE_DELETION_REQUESTS));
+
+  const { data: deletionRequests } = useSWR(
+    shouldFetchDeletion ? '/api/v1/deletion-request' : null
+  );
+
+  const pendingDeletionCount =
+    deletionRequests?.filter(
+      (req: any) =>
+        req.status === 0 &&
+        !req.votes.some((vote: any) => vote.user.id === user?.id)
+    ).length || 0;
+
   useClickOutside(navRef, () => setClosed());
 
   useEffect(() => {
@@ -200,10 +218,9 @@ const Sidebar = ({
                       {SidebarLinks.filter((link) =>
                         link.messagesKey === 'deletionrequests'
                           ? settings.currentSettings.enableDeletionRequests &&
-                            hasPermission(
-                              link.requiredPermission ?? 0,
-                              { type: link.permissionType ?? 'and' }
-                            )
+                            hasPermission(link.requiredPermission ?? 0, {
+                              type: link.permissionType ?? 'and',
+                            })
                           : link.requiredPermission
                           ? hasPermission(link.requiredPermission, {
                               type: link.permissionType ?? 'and',
@@ -240,6 +257,23 @@ const Sidebar = ({
                               {intl.formatMessage(
                                 menuMessages[sidebarLink.messagesKey]
                               )}
+
+                              {sidebarLink.messagesKey === 'deletionrequests' &&
+                                pendingDeletionCount > 0 && (
+                                  <div className="ml-auto flex">
+                                    <Badge
+                                      className={`rounded-md bg-gradient-to-br ${
+                                        router.pathname.match(
+                                          sidebarLink.activeRegExp
+                                        )
+                                          ? 'border-red-600 from-red-700 to-orange-700'
+                                          : 'border-red-500 from-red-600 to-orange-600'
+                                      }`}
+                                    >
+                                      {pendingDeletionCount}
+                                    </Badge>
+                                  </div>
+                                )}
                             </a>
                           </Link>
                         );
@@ -252,9 +286,7 @@ const Sidebar = ({
                     )}
                   </div>
                 </div>
-                <div className="w-14 flex-shrink-0">
-                  {/* <!-- Force sidebar to shrink to fit close icon --> */}
-                </div>
+                <div className="w-14 flex-shrink-0">{/* */}</div>
               </>
             </Transition.Child>
           </div>
@@ -276,10 +308,9 @@ const Sidebar = ({
                 {SidebarLinks.filter((link) =>
                   link.messagesKey === 'deletionrequests'
                     ? settings.currentSettings.enableDeletionRequests &&
-                      hasPermission(
-                        link.requiredPermission ?? 0,
-                        { type: link.permissionType ?? 'and' }
-                      )
+                      hasPermission(link.requiredPermission ?? 0, {
+                        type: link.permissionType ?? 'and',
+                      })
                     : link.requiredPermission
                     ? hasPermission(link.requiredPermission, {
                         type: link.permissionType ?? 'and',
@@ -339,6 +370,23 @@ const Sidebar = ({
                                 }`}
                               >
                                 {openIssuesCount}
+                              </Badge>
+                            </div>
+                          )}
+
+                        {sidebarLink.messagesKey === 'deletionrequests' &&
+                          pendingDeletionCount > 0 && (
+                            <div className="ml-auto flex">
+                              <Badge
+                                className={`rounded-md bg-gradient-to-br ${
+                                  router.pathname.match(
+                                    sidebarLink.activeRegExp
+                                  )
+                                    ? 'border-red-600 from-red-700 to-orange-700'
+                                    : 'border-red-500 from-red-600 to-orange-600'
+                                }`}
+                              >
+                                {pendingDeletionCount}
                               </Badge>
                             </div>
                           )}
