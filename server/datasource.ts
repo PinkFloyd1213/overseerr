@@ -3,8 +3,6 @@ import type { DataSourceOptions, EntityTarget, Repository } from 'typeorm';
 import { DataSource } from 'typeorm';
 import { DeletionRequest } from './entity/DeletionRequest';
 import { DeletionVote } from './entity/DeletionVote';
-import Media from './entity/Media';
-import { User } from './entity/User';
 
 const devConfig: DataSourceOptions = {
   type: 'sqlite',
@@ -29,7 +27,7 @@ const prodConfig: DataSourceOptions = {
   migrationsRun: false,
   logging: false,
   enableWAL: true,
-  entities: ['dist/entity/**/*.js', DeletionRequest, DeletionVote, User, Media],
+  entities: ['dist/entity/**/*.js', DeletionRequest, DeletionVote],
   migrations: ['dist/migration/**/*.js'],
   subscribers: ['dist/subscriber/**/*.js'],
 };
